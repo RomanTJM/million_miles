@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 settings = get_settings()
 
 _scraper_task = None
+_bot_task = None
 
 
 async def _scraper_loop():
@@ -27,13 +28,18 @@ async def _scraper_loop():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global _scraper_task
+    global _scraper_task, _bot_task
     await init_db()
     if settings.SCRAPER_ENABLED:
         _scraper_task = asyncio.create_task(_scraper_loop())
+    if settings.TELEGRAM_ENABLED and settings.TELEGRAM_BOT_TOKEN:
+        from bot.telegram_bot import run_bot
+        _bot_task = asyncio.create_task(run_bot())
     yield
     if _scraper_task:
         _scraper_task.cancel()
+    if _bot_task:
+        _bot_task.cancel()
     await dispose_db()
 
 
