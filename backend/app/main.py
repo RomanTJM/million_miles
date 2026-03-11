@@ -1,13 +1,38 @@
+import asyncio
+import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.database import init_db, dispose_db
-from app.routers import auth, cars
+from app.core.config import get_settings
+from app.scrapers.carsensor import scrape_job
+
+logger = logging.getLogger(__name__)
+settings = get_settings()
+
+_scraper_task = None
+
+
+async def _scraper_loop():
+    logger.info("Скрапер запущен как фоновая задача")
+    while True:
+        try:
+            await scrape_job()
+        except Exception as e:
+            logger.error(f"Ошибка в цикле скрапера: {e}")
+        logger.info(f"Следующий запуск скрапера через {settings.SCRAPER_INTERVAL_SECONDS} сек")
+        await asyncio.sleep(settings.SCRAPER_INTERVAL_SECONDS)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    global _scraper_task
     await init_db()
+    if settings.SCRAPER_ENABLED:
+        _scraper_task = asyncio.create_task(_scraper_loop())
     yield
+    if _scraper_task:
+        _scraper_task.cancel()
     await dispose_db()
 
 

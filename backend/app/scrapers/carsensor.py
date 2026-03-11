@@ -47,6 +47,9 @@ class CarSensorScraper:
     )
     async def fetch_page(self, session: aiohttp.ClientSession, page: int) -> List[dict]:
         url = self._build_url(page)
+        timeout = aiohttp.ClientTimeout(total=120 if settings.SCRAPERAPI_KEY else self.timeout)
+
+        logger.info(f"Запрос страницы {page}: {url[:80]}...")
 
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
@@ -55,7 +58,7 @@ class CarSensorScraper:
         }
 
         try:
-            async with session.get(url, headers=headers, timeout=self.timeout) as response:
+            async with session.get(url, headers=headers, timeout=timeout) as response:
                 if response.status != 200:
                     logger.error(f"Ошибка {response.status} при запросе к странице {page}")
                     return []
