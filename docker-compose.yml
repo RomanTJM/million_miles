@@ -1,0 +1,125 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    container_name: auto_listings_db
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: auto_listings
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d auto_listings"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: auto_listings_backend
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SQLALCHEMY_DATABASE_URL: postgresql://user:password@db:5432/auto_listings
+      SECRET_KEY: super-secret-key-needed-to-change-in-production
+      DEBUG: "false"
+      SCRAPER_ENABLED: "false"
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    command: >
+      sh -c "alembic upgrade head &&
+             python -m app.seeds && 
+             uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  # Scraper Worker
+  scraper:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.worker
+    container_name: auto_listings_scraper
+    depends_on:
+      db:
+        condition: service_healthy
+      backend:
+        condition: service_started
+    environment:
+      SQLALCHEMY_DATABASE_URL: postgresql://user:password@db:5432/auto_listings
+      SECRET_KEY: super-secret-key-needed-to-change-in-production
+      DEBUG: "false"
+      SCRAPER_ENABLED: "true"
+      SCRAPER_INTERVAL_SECONDS: "3600"
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    volumes:
+      - ./backend:/app
+    command: >
+      sh -c "alembic upgrade head &&
+             python -m app.seeds &&
+             python -m app.scrapers.worker"
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  # Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: auto_listings_frontend
+    depends_on:
+      - backend
+    environment:
+      VITE_API_URL: http://backend:8000
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  # Telegram Bot with LLM support
+  bot:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.bot
+    container_name: auto_listings_bot
+    depends_on:
+      db:
+        condition: service_healthy
+      backend:
+        condition: service_started
+    environment:
+      SQLALCHEMY_DATABASE_URL: postgresql://user:password@db:5432/auto_listings
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_ENABLED: "true"
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    volumes:
+      - ./backend:/app
+    networks:
+      - app-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  app-network:
+    driver: bridge
