@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.database import init_db, dispose_db
 from app.core.config import get_settings
 from app.scrapers.carsensor import scrape_job
+from app.routers import auth, cars
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
