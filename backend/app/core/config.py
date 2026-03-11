@@ -22,6 +22,8 @@ class Settings(BaseSettings):
     TELEGRAM_ENABLED: bool = False
     
     OPENAI_API_KEY: str = ""
+
+    SCRAPERAPI_KEY: str = ""
     
     class Config:
         env_file = ".env"

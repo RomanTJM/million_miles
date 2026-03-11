@@ -30,16 +30,23 @@ class CarSensorScraper:
         self.timeout = settings.SCRAPER_TIMEOUT
         self.max_retries = settings.SCRAPER_MAX_RETRIES
 
+    def _build_url(self, page: int) -> str:
+        if page == 1:
+            target = f"{self.base_url}/usedcar/index.html"
+        else:
+            target = f"{self.base_url}/usedcar/index{page}.html"
+
+        if settings.SCRAPERAPI_KEY:
+            return f"http://api.scraperapi.com?api_key={settings.SCRAPERAPI_KEY}&url={target}&country_code=jp"
+        return target
+
     @retry(
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=2, max=10),
         retry=retry_if_exception_type(aiohttp.ClientError),
     )
     async def fetch_page(self, session: aiohttp.ClientSession, page: int) -> List[dict]:
-        if page == 1:
-            url = f"{self.base_url}/usedcar/index.html"
-        else:
-            url = f"{self.base_url}/usedcar/index{page}.html"
+        url = self._build_url(page)
 
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
