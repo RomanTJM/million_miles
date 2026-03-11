@@ -122,6 +122,7 @@ SCRAPER_INTERVAL_SECONDS=3600
 TELEGRAM_BOT_TOKEN=токен-от-BotFather
 TELEGRAM_ENABLED=false
 OPENAI_API_KEY=ключ-openai-для-умного-поиска
+SCRAPERAPI_KEY=your-scraperapi-key-here
 ```
 
 ## Telegram-бот
