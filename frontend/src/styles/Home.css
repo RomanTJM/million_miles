@@ -504,29 +504,85 @@
 @media (max-width: 900px) {
   .page-layout {
     flex-direction: column;
+    gap: 12px;
   }
   .sidebar {
     width: 100%;
     flex-direction: row;
     flex-wrap: wrap;
+    gap: 8px;
   }
   .sidebar-section {
     flex: 1;
-    min-width: 220px;
+    min-width: 200px;
   }
-  .cars-list {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-@media (max-width: 700px) {
   .cars-list {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 
-@media (max-width: 440px) {
+@media (max-width: 600px) {
+  .header-content {
+    height: 48px;
+    padding: 0 12px;
+  }
+  .header-logo-text {
+    font-size: 16px;
+  }
+  .user-name {
+    display: none;
+  }
+  .page-layout {
+    padding: 12px;
+    gap: 10px;
+  }
+  .sidebar {
+    flex-direction: column;
+    gap: 0;
+  }
+  .sidebar-section {
+    min-width: unset;
+    width: 100%;
+    border-radius: 0;
+    border-bottom: none;
+  }
+  .sidebar-section:first-child {
+    border-radius: 4px 4px 0 0;
+  }
+  .sidebar-section:last-of-type {
+    border-bottom: 1px solid var(--cs-border);
+    border-radius: 0 0 4px 4px;
+  }
+  .sidebar-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding: 10px;
+  }
+  .sidebar-field:only-child {
+    grid-column: 1 / -1;
+  }
+  .btn-reset {
+    margin-top: 8px;
+  }
   .cars-list {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+  .car-body {
+    padding: 8px;
+  }
+  .price-total {
+    font-size: 15px;
+  }
+  .pagination button {
+    min-width: 32px;
+    height: 30px;
+    padding: 0 8px;
+    font-size: 12px;
+  }
+  .page-info {
+    font-size: 11px;
+    padding: 0 4px;
   }
 }
